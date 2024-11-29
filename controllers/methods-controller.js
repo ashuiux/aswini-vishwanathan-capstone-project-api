@@ -13,9 +13,14 @@ const getAllMethods = async (_req, res) => {
 };
 
 const addMethod = async (req, res) => {
-  const { name, description, use_cases, project_types } = req.body;
-  if (!name || !description || !use_cases || !project_types) {
-    return res.status(400).send("All fields are required.");
+  const { name, description, design_type, use_cases = [], project_types = [] } = req.body;
+
+  if (!name || !description || !design_type) {
+    return res.status(400).send("Name, description, and design type are required.");
+  }
+
+  if (!Array.isArray(use_cases) || !Array.isArray(project_types)) {
+    return res.status(400).send("Use cases and project types must be arrays.");
   }
 
   try {
@@ -23,23 +28,28 @@ const addMethod = async (req, res) => {
       {
         name,
         description,
+        design_type,
         use_cases: JSON.stringify(use_cases),
         project_types: JSON.stringify(project_types),
       },
-      ["id", "name", "description", "use_cases", "project_types"]
+      ["id", "name", "description", "design_type", "use_cases", "project_types"]
     );
     res.status(201).json(newMethod[0]);
   } catch (err) {
-    res.status(400).send(`Error adding research method: ${err}`);
+    res.status(400).send(`Error adding research method: ${err.message}`);
   }
 };
 
 const updateMethod = async (req, res) => {
   const { id } = req.params;
-  const { name, description, use_cases, project_types } = req.body;
+  const { name, description, use_cases, project_types, design_type } = req.body;
 
-  if (!name || !description || !use_cases || !project_types) {
-    return res.status(400).send("All fields are required.");
+  if (!name || !description || !design_type) {
+    return res.status(400).send("Name, description, and design type are required.");
+  }
+
+  if (!Array.isArray(use_cases) || !Array.isArray(project_types)) {
+    return res.status(400).send("Use cases and project types must be arrays.");
   }
 
   try {
@@ -49,10 +59,11 @@ const updateMethod = async (req, res) => {
         {
           name,
           description,
+          design_type,
           use_cases: JSON.stringify(use_cases),
           project_types: JSON.stringify(project_types),
         },
-        ["id", "name", "description", "use_cases", "project_types"]
+        ["id", "name", "description", "design_type", "use_cases", "project_types"]
       );
 
     if (!updated.length) {
@@ -61,11 +72,25 @@ const updateMethod = async (req, res) => {
 
     res.status(200).json(updated[0]);
   } catch (err) {
-    res.status(400).send(`Error updating research method: ${err}`);
+    res.status(400).send(`Error updating research method: ${err.message}`);
+  }
+};
+const getMethodById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const method = await knex("research_methods").where({ id }).first();
+
+    if (!method) {
+      return res.status(404).send(`Research method with ID ${id} not found.`);
+    }
+
+    res.status(200).json(method);
+  } catch (err) {
+    res.status(400).send(`Error retrieving research method: ${err.message}`);
   }
 };
 
-// Delete a research method
 const deleteMethod = async (req, res) => {
   const { id } = req.params;
 
@@ -73,13 +98,14 @@ const deleteMethod = async (req, res) => {
     const deleted = await knex("research_methods").where({ id }).del();
 
     if (!deleted) {
-      return res.status(404).send("Research method not found.");
+      return res.status(404).send(`Research method with ID ${id} not found.`);
     }
 
-    res.status(200).send("Research method deleted successfully.");
+    res.status(200).send(`Research method with ID ${id} deleted successfully.`);
   } catch (err) {
-    res.status(400).send(`Error deleting research method: ${err}`);
+    res.status(400).send(`Error deleting research method: ${err.message}`);
   }
 };
 
-export { getAllMethods, addMethod, updateMethod, deleteMethod };
+
+export { getAllMethods, addMethod, updateMethod, getMethodById, deleteMethod };
