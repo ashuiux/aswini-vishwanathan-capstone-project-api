@@ -10,6 +10,7 @@ router
 
 router
   .route("/:id")
+  .get(methodsControllers.getMethodById)
   .put(methodsControllers.updateMethod)
   .delete(methodsControllers.deleteMethod);
 
