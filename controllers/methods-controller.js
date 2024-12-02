@@ -53,24 +53,22 @@ const updateMethod = async (req, res) => {
   }
 
   try {
-    const updated = await knex("research_methods")
+    const updatedRows = await knex("research_methods")
       .where({ id })
-      .update(
-        {
-          name,
-          description,
-          design_type,
-          use_cases: JSON.stringify(use_cases),
-          project_types: JSON.stringify(project_types),
-        },
-        ["id", "name", "description", "design_type", "use_cases", "project_types"]
-      );
+      .update({
+        name,
+        description,
+        design_type,
+        use_cases: JSON.stringify(use_cases),
+        project_types: JSON.stringify(project_types),
+      });
 
-    if (!updated.length) {
+    if (updatedRows === 0) {
       return res.status(404).send("Research method not found.");
     }
 
-    res.status(200).json(updated[0]);
+    const updatedMethod = await knex("research_methods").where({ id }).first();
+    res.status(200).json(updatedMethod);
   } catch (err) {
     res.status(400).send(`Error updating research method: ${err.message}`);
   }
